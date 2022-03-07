@@ -1,0 +1,341 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">站点列表</div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.status">
+                                <option value="">所有</option>
+                                <option value="0">已停用</option>
+                                <option value="1">运行中</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="number" placeholder="站点ID" class="form-control"
+                                   v-model="search.zid"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="domain" placeholder="站点域名" class="form-control"
+                                   v-model="search.domain"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th>站点ID</th>
+                        <th>站点名称</th>
+                        <th>上级ID</th>
+                        <th>站长</th>
+                        <th>余额</th>
+                        <th>联系QQ</th>
+                        <th>绑定域名</th>
+                        <th>站点版本</th>
+                        <th>状态</th>
+                        <th>开通时间</th>
+                        <th>操作</th>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{ record.zid }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>{{ record.rid }}</td>
+                            <td>{{ record.user }}</td>
+                            <td>
+                                <a data-toggle="modal" data-target="#modal-rmb" class="btn-sm btn-success" title="点击充值"
+                                   @click="web=record">
+                                    {{ record.rmb }}
+                                </a>
+                            </td>
+                            <td>{{ record.qq }}</td>
+                            <td>{{ record.domain }},{{ record.extra_domain }}</td>
+                            <td data-toggle="modal" data-target="#modal-web" @click="web=record"
+                                v-html="getWebKind(record.kind)"></td>
+                            <td>
+                                <a class="btn-sm btn-warning" v-if="parseInt(record.status)===0" title="点击启用"
+                                   @click="change(record,'status',1)">已停用</a>
+                                <a class="btn-sm btn-success" v-else title="点击停用"
+                                   @click="change(record,'status',0)">运行中</a>
+                            </td>
+                            <td>{{ record.add_time }}</td>
+                            <td>
+                                <a class="btn-sm btn-info" data-toggle="modal" data-target="#modal-web"
+                                   @click="web=record">修改</a>
+                                <a class="btn-sm btn-warning" data-toggle="modal" data-target="#modal-pass"
+                                   @click="web=record">改密</a>
+                                <a class="btn-sm btn-danger" @click="delWeb(record.zid)">删除</a>
+                                <a class="btn-sm btn-warning" data-toggle="modal" data-target="#modal-info"
+                                   @click="web=record">信息</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal-info">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">站点信息</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group-item list-group-item-danger">站点永久域名：{{ web.domain }}</div>
+                    <a :href="'http://'+web.domain" target="_blank" class="list-group-item list-group-item-danger">
+                        站点首页地址：http://{{ web.domain }}</a>
+                    <a :href="'http://'+web.domain+'/admin'" target="_blank"
+                       class="list-group-item list-group-item-danger">站点后台地址：http://{{ web.domain }}/admin</a>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">知道了</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-rmb">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">余额充值</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-rmb">
+                        <input type="hidden" name="uid" :value="web.uid">
+                        <input type="text" disabled hidden>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon p-0">
+                                    <select name="do"
+                                            style="-webkit-border-radius: 0;height:20px;border: 0;outline: none !important;border-radius: 5px 0 0 5px;padding: 0 5px 0 5px;">
+                                        <option value="0">充值</option>
+                                        <option value="1">扣除</option>
+                                    </select>
+                                </span>
+                                <input type="number" class="form-control" name="rmb" placeholder="输入金额">
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="recharge()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-web">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">修改分站</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-web">
+                        <input type="hidden" name="zid" :value="web.zid">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">站点名称</span>
+                                <input type="text" class="form-control" name="name" :value="web.name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">站点版本</span>
+                                <select name="kind" class="form-control" v-bind="web.kind">
+                                    <option value="0" :selected="parseInt(web.kind)===0">
+                                        {:getWebKindName(0)}
+                                    </option>
+                                    <option value="1" :selected="parseInt(web.kind)===1">
+                                        {:getWebKindName(1)}
+                                    </option>
+                                    <option value="2" :selected="parseInt(web.kind)===2">
+                                        {:getWebKindName(2)}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">站点域名</span>
+                                <input type="text" class="form-control" name="domain" :value="web.domain">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">备用域名</span>
+                                <input type="text" class="form-control" name="extra_domain" :value="web.extra_domain">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="update()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-pass">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">修改分站密码</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-pass">
+                        <input type="hidden" name="zid" :value="web.zid">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">新密码</span>
+                                <input type="text" class="form-control" name="pass" placeholder="输入要设置的新密码">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="pass()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10,
+                status: 1,
+                zid: null,
+                domain: null
+            },
+            web: {},
+            total: 0,
+            list: []
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            change: function (web, act, value) {
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'change'])}", {
+                    zid: web.zid,
+                    act: act,
+                    value: value
+                }, function (data) {
+                    if (data.code === 0) {
+                        web[act] = value
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            recharge: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'recharge'])}", $("#form-rmb").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.web.rmb = data.rmb
+                        $("#modal-rmb").modal('hide');
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            update: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'update'])}", $("#form-web").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        $("#modal-web").modal('hide');
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            pass: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'pass'])}", $("#form-pass").serialize(), function (data) {
+                    if (data.code === 0) {
+                        $("#modal-pass").modal('hide');
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            delWeb: function (zid) {
+                if (!confirm('删除站点数据不可恢复，确认要删除此站点？')) return
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'del'])}", {zid: zid}, function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            getWebKind: function (kind) {
+                kind = parseInt(kind);
+                if (kind === 1) {
+                    return '<span class="btn-sm btn-warning" >专业版</span>';
+                } else if (kind === 2) {
+                    return '<span class="btn-sm btn-danger" >旗舰版</span>';
+                } else {
+                    return '<span class="btn-sm btn-info" >普及版</span>';
+                }
+            }
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

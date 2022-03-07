@@ -1,0 +1,190 @@
+{extend name="home/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    余额提现记录
+                    <span class="pull-right">
+                    <span class="btn-sm btn-success" {if condition="$userInfo.tx_info" }data-toggle="modal"
+                          data-target="#modal-tx" {else}@click="ts()" {/if}>申请</span>
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.status">
+                                <option value="">所有</option>
+                                <option value="0">等待中</option>
+                                <option value="1">已转账</option>
+                                <option value="2">已驳回</option>
+                                <option value="3">有异常</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th>金额</th>
+                        <th>手续费</th>
+                        <th>状态</th>
+                        <th>备注</th>
+                        <th>申请时间</th>
+                        <th>处理时间</th>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{ record.rmb }}</td>
+                            <td>{{ record.sxf }}</td>
+                            <td v-html="getTxStatus(record.status)"></td>
+                            <td>{{ record.remark }}</td>
+                            <td>{{ record.add_time }}</td>
+                            <td>{{ record.finish_time }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="modal-tx">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">申请提现</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-tx">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">我的余额</span>
+                                <input type="text" class="form-control" v-model="rmb" disabled>
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">提现金额</span>
+                                <input type="number" class="form-control" v-model="tx.rmb"
+                                       @change="tx.sxf = (parseFloat(tx.rmb)*parseFloat(tx.rate)).toFixed(2)"
+                                       :placeholder="'最低提现'+tx.min+'元'">
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">手续费</span>
+                                <input type="text" class="form-control" v-model="tx.sxf" disabled>
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="addTx()">申请提现</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10,
+                status: ''
+            },
+            total: 0,
+            list: [],
+            rmb: '{$userInfo.rmb}',
+            tx: {
+                min: '{:config("sys_tx_min")}',
+                rate: '{:config("sys_tx_rate")}',
+                rmb: 0,
+                sxf: 0
+            }
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                this.$refs.pagination.setCurrent(this.search.page) // 改变页码
+                var vue = this;
+                klsf.ajax("{:url('HomeAjax/rmb',['action'=>'txRecord'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            getTxStatus: function (status) {
+                switch (parseInt(status)) {
+                    case 0:
+                        return '<span class="btn-sm btn-info">等待中</span>';
+                    case 1:
+                        return '<span class="btn-sm btn-success">已转账</span>';
+                    case 2:
+                        return '<span class="btn-sm btn-warning">已驳回</span>';
+                    case 3:
+                        return '<span class="btn-sm btn-danger">有异常</span>';
+                    default:
+                        return '<span class="btn-sm btn-danger">未○知</span>';
+                }
+            },
+            ts: function () {
+                klsf.msg('请先绑定提现账号', 'error', 3);
+                $.pjax({
+                    url: "config.html", container: '#pjax-container'
+                })
+            },
+            addTx: function () {
+                if (parseFloat(this.tx.rmb) < parseFloat(this.tx.min)) {
+                    klsf.msg('最低提现 ' + this.tx.min + ' 元', 'error');
+                    return
+                } else if (parseFloat(this.tx.rmb) + parseFloat(this.tx.sxf) > parseFloat(this.rmb)) {
+                    klsf.msg('账户余额不足 ' + (parseFloat(this.tx.rmb) + parseFloat(this.tx.sxf)) + ' 元', 'error');
+                } else {
+                    var vue = this;
+                    klsf.ajax("{:url('HomeAjax/rmb',['action'=>'tx'])}", {rmb: this.tx.rmb}, function (data) {
+                        if (data.code === 0) {
+                            vue.loadRecordList();
+                            vue.rmb = data.rmb;
+                            $("#modal-tx").modal('hide');
+                            klsf.msg(data.message, 'success')
+                        } else {
+                            klsf.msg(data.message, 'error')
+                        }
+                    })
+                }
+            },
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

@@ -1,0 +1,138 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-sm-12 mt-2">
+        <div class="panel panel-primary">
+            <div class="panel-heading">支付订单列表</div>
+            <div class="panel-body">
+                <div class="form-inline">
+                    <div class="form-group">
+                        <select class="form-control" v-model="search.pay_type">
+                            <option value="">所有</option>
+                            <option value="wxpay">微信支付</option>
+                            <option value="qqpay">QQ钱包</option>
+                            <option value="alipay">支付宝</option>
+                        </select>
+                    </div>
+                    <div class="form-group ml-1">
+                        <select class="form-control" v-model="search.status">
+                            <option value="">所有</option>
+                            <option value="1">已支付</option>
+                            <option value="0">未支付</option>
+                        </select></div>
+                    <div class="form-group ml-1">
+                        <input type="text" placeholder="商户订单号" class="form-control"
+                               v-model="search.oid"/>
+                    </div>
+                    <div class="form-group ml-1">
+                        <input type="text" placeholder="商品订单号" class="form-control"
+                               v-model="search.id"/>
+                    </div>
+                    <div class="form-group ml-1">
+                        <input type="text" placeholder="支付订单号" class="form-control"
+                               v-model="search.pid"/>
+                    </div>
+                    <div class="form-group ml-1">
+                        <input type="number" placeholder="所属站点" class="form-control"
+                               v-model="search.zid"/>
+                    </div>
+                    <div class="form-group ml-1">
+                        <button type="button" class="btn btn-primary"
+                                @click="search.page=1;loadRecordList()">搜索
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-info">
+                    <th>商户订单</th>
+                    <th>商品订单</th>
+                    <th>所属站点</th>
+                    <th>金额</th>
+                    <th>状态</th>
+                    <th>支付方式</th>
+                    <th>支付订单</th>
+                    <th>支付时间</th>
+                    <th>创建时间</th>
+                    </thead>
+                    <tbody>
+                    <tr v-for="record in list">
+                        <td>{{ record.oid }}</td>
+                        <td v-if="parseInt(record.id)===-999">充值余额</td>
+                        <td v-else-if="parseInt(record.id)<0">搭建分站</td>
+                        <td v-else>{{ record.id }}</td>
+                        <td>{{ record.zid }}</td>
+                        <td>{{ record.rmb }}</td>
+                        <td v-if="parseInt(record.status)===0" class="text-warning">未支付</td>
+                        <td v-else class="text-success">已支付</td>
+                        <td v-html="getPayType(record.pay_type)"></td>
+                        <td>{{ record.pid }}</td>
+                        <td>{{ record.pay_time }}</td>
+                        <td>{{ record.add_time }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-footer">
+                <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                            @page-phange="pageChange"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10,
+                status: 1,
+                pay_type: '',
+                id: null,
+                pid: null,
+                zid: null,
+                oid: null
+            },
+            total: 0,
+            list: []
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            getPayType: function (type) {
+                switch (type) {
+                    case 'alipay':
+                        return '支付宝';
+                    case 'wxpay':
+                        return '微信支付';
+                    case 'qqpay':
+                        return 'QQ钱包';
+                    default:
+                        return '';
+                }
+            },
+            loadRecordList: function () {
+                this.$refs.pagination.setCurrent(this.search.page) // 改变页码
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/payOrder',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

@@ -1,0 +1,386 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class=" col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">商品对接信息</div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">
+                            商品对接
+                        </span>
+                        <select class="form-control" v-model="goods.did" @change="setDj()">
+                            <option value="0">自营（不进行对接）</option>
+                            <option v-for="dj in djList" :value="dj.did">{{ dj.domain }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div v-if="parseInt(goods.did) !== 0">
+                    <div class="form-group" v-if="dj.kind==='kyx'">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                商品地址
+                            </span>
+                            <input class="form-control" v-model="goodsUrl" placeholder="输入商品下单地址">
+                            <span class="input-group-addon btn-success" @click="getDjPost2()">获取</span>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div class="form-group">
+                            <div class="input-group">
+                            <span class="input-group-addon">
+                                对接商品
+                            </span>
+                                <select class="form-control" v-model="djGoodsIndex" @change="getDjPost()">
+                                    <option v-for="(djGoods,i) in djGoodsList" :value="i">
+                                        {{ djGoods.name }}
+                                    </option>
+                                </select>
+                                <span class="input-group-addon btn-success" @click="getDjGoods()">获取</span>
+                            </div>
+                        </div>
+                        <div class="form-group" v-if="dj.kind==='95sq'">
+                            <div class="input-group">
+                            <span class="input-group-addon">
+                                支付方式
+                            </span>
+                                <select class="form-control" v-model="dj.type" @change="changeType()">
+                                    <option value="0">点数</option>
+                                    <option value="1">余额</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                对接POST
+                            </span>
+                            <textarea rows="5" class="form-control" placeholder="对接提交POST数据"
+                                      v-model="goods.post"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                对接成功改变订单状态为
+                            </span>
+                            <select name="api_status" class="form-control" v-model="goods.api_status">
+                                <option value="0">不改变</option>
+                                <option value="1">进行中</option>
+                                <option value="90">已完成</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class=" col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">商品基本信息</div>
+            <div class="panel-body">
+                <div class="form-group" v-if="isUpdate">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                商品ID
+                            </span>
+                        <input class="form-control" v-model="goods.goodsid" disabled>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                商品名称
+                            </span>
+                        <input type="text" name="name" class="form-control" v-model="goods.name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                商品分组
+                            </span>
+                        <select class="form-control" v-model="goods.gid">
+                            <option value="0">选择分组</option>
+                            <option v-for="group in groupList" :value="group.gid">{{ group.name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                商品介绍
+                            </span>
+                        <textarea name="desc" rows="5" class="form-control" v-model="goods.desc"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                销售价格
+                            </span>
+                        <input type="number" name="price" class="form-control" v-model="goods.price" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                第一个输入框标题
+                            </span>
+                        <input type="text" name="input" class="form-control" v-model="goods.input"
+                               placeholder="留空则默认为'QQ号码'" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                更多输入框标题
+                            </span>
+                        <input type="text" name="input_more" class="form-control" v-model="goods.input_more" required>
+                    </div>
+                    <pre>多个输入框请用|隔开(不能超过5个)<br><b>其他特殊输入</b><br>
+QQ号码(验证空间权限)：QZONE<br>
+说说ID：SSID<br>
+全名K歌歌曲ID:QMGQID
+快手ID：KSID<br>
+快手视频ID：KSZPID<br></pre>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">
+                            每份数量
+                        </span>
+                        <input type="number" name="unit" class="form-control" v-model="goods.unit" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                允许重复
+                            </span>
+                        <select name="is_repeat" class="form-control" v-model="goods.is_repeat">
+                            <option value="0">否</option>
+                            <option value="1">是</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">
+                            下单限制
+                        </span>
+                        <input name="min" type="number" class="form-control" placeholder="输入最小限制"
+                               v-model="goods.min" value="1">
+                        <span class="input-group-addon">-</span>
+                        <input name="max" type="number" class="form-control" placeholder="输入最大限制"
+                               v-model="goods.max" value="999999999">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">下单数量必须是</span>
+                        <input name="rate" type="number" class="form-control" placeholder="输入下单数量基数"
+                               v-model="goods.rate" value="1">
+                        <span class="input-group-addon">的整数倍</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">购买次数</span>
+                        <input type="number" name="max_num" class="form-control" value="0"
+                               v-model="goods.max_num"
+                               placeholder="输入每个用户最多购买几次">
+                        <span class="input-group-addon">次</span>
+                    </div>
+                    <pre class="text-center">填写0则不限制</pre>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                默认下单数量
+                            </span>
+                        <input type="number" name="default" class="form-control" v-model="goods.default" required>
+                    </div>
+                    <pre class="text-center">0代表用户自己填写下单数量，否则不显示数量框采用此默认数量</pre>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                            <span class="input-group-addon">
+                                下单黑名单
+                            </span>
+                        <textarea name="balcklist" class="form-control" rows="5" v-model="goods.blacklist"></textarea>
+                    </div>
+                    <pre class="text-center">一行一条</pre>
+                </div>
+            </div>
+            <div class="panel-footer text-center">
+                <span class="btn btn-primary" @click="save()" v-html="isUpdate?'保存修改':'确认添加'"></span>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    goodsid = '{$Think.get.goodsid}';
+    new Vue({
+        el: '#vue-page',
+        data: {
+            isUpdate: goodsid !== '',
+            groupList: [],
+            goods: {
+                gid: 0,
+                unit: 1,
+                is_repeat: 0,
+                api_status: 0,
+                default: 0,
+                min: 1,
+                max: 999999999,
+                rate: 1,
+                max_num: 0,
+                did: 0,
+                post: '',
+                model: [{
+                    name: 'QQ号码',
+                    tips: '输入QQ号码',
+                    rule: 'require|number|length:5,10'
+                }]
+            },
+            dj: {
+                kind: 0,
+                type: 0
+            },
+            goodsUrl: null,
+            djList: [],
+            djGoodsList: [],
+            djGoodsIndex: 0
+        },
+        methods: {
+            loadGoodsInfo: function () {
+                if (!this.isUpdate) {
+                    return
+                }
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'info'])}", {goodsid: goodsid}, function (data) {
+                    if (data.code === 0) {
+                        vue.goods = data.info
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            loadGroupAll: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'groupAll'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.groupList = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                }, null, false)
+            },
+            loadDjAll: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'all'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.djList = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                }, null, false)
+            },
+            del: function (i) {
+                this.goods.model.splice(i, 1)
+            },
+            add: function () {
+                this.goods.model.push({name: null, tips: null, rule: null})
+            },
+            save: function () {
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'save'])}", this.goods, function (data) {
+                    if (data.code === 0) {
+                        klsf.msg(data.message, 'success')
+                        setTimeout(function () {
+                            $.pjax({
+                                url: "goods_list.html",
+                                container: '#pjax-container'
+                            })
+                        }, 1000);
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            getDjGoods: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'getGoods'])}", {did: this.goods.did}, function (data) {
+                    if (data.code === 0) {
+                        vue.djGoodsList = data.list;
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            getDjPost2: function () {
+                this.goods.post = null;
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'getPost'])}", {
+                    did: vue.goods.did,
+                    url: vue.goodsUrl,
+                    id: 1,
+                    type: 1,
+                }, function (data) {
+                    if (data.code === 0) {
+                        vue.goods.post = data.post;
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            getDjPost: function () {
+                this.goods.post = null;
+                if (this.djGoodsList[this.djGoodsIndex] !== undefined) {
+                    var vue = this;
+                    var goods = this.djGoodsList[this.djGoodsIndex]
+                    klsf.ajax("{:url('AdminAjax/dj',['action'=>'getPost'])}", {
+                        did: vue.goods.did,
+                        id: goods.id,
+                        type: goods.type
+                    }, function (data) {
+                        if (data.code === 0) {
+                            vue.goods.post = data.post;
+                            vue.changeType();
+                        } else {
+                            klsf.msg(data.message, 'error')
+                        }
+                    })
+                }
+            },
+            setDj: function () {
+                var vue = this;
+                vue.djList.forEach(function (t) {
+                    if (t.did === vue.goods.did) {
+                        vue.dj.kind = t.kind;
+                    }
+                })
+            },
+            changeType: function () {
+                var vue = this;
+                if (vue.dj.kind === '95sq') {
+                    vue.goods.post = vue.goods.post.replace(/&pay_type=1/, '');
+                    if (parseInt(vue.dj.type) === 1) {
+                        vue.goods.post += '&pay_type=1';
+                    }
+                }
+            }
+        },
+        mounted: function () {
+            this.loadGoodsInfo();
+            this.loadDjAll();
+            this.loadGroupAll();
+        }
+    })
+</script>
+{/block}

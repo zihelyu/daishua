@@ -1,0 +1,7 @@
+ALTER TABLE `klds_goods`
+ADD COLUMN `api_status`  tinyint(2) NOT NULL DEFAULT 0 AFTER `post`;
+ALTER TABLE `klds_goods`
+ADD COLUMN `min`  int UNSIGNED NOT NULL DEFAULT 1 AFTER `default`,
+ADD COLUMN `max`  int UNSIGNED NOT NULL DEFAULT 999999999 AFTER `min`,
+ADD COLUMN `rate`  varchar(255) NOT NULL DEFAULT 1 AFTER `max`;
+ADD COLUMN `max_num`  int UNSIGNED NOT NULL DEFAULT 0 AFTER `rate`;

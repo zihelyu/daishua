@@ -1,0 +1,185 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">站长提现记录</div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.status">
+                                <option value="">所有</option>
+                                <option value="0">等待中</option>
+                                <option value="1">已转账</option>
+                                <option value="2">已驳回</option>
+                                <option value="3">有异常</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="number" placeholder="站点ID" class="form-control"
+                                   v-model="search.zid"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th>站点ID</th>
+                        <th>提现账号</th>
+                        <th>金额</th>
+                        <th>手续费</th>
+                        <th>状态</th>
+                        <th>备注</th>
+                        <th>申请时间</th>
+                        <th>处理时间</th>
+                        <th>操作</th>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{ record.uid }}</td>
+                            <td v-if="record.tx_info.length==3">
+                                <span class="text-success">{{ record.tx_info[0] }}</span>,账号:<span
+                                    class="text-warning">{{ record.tx_info[1] }}</span>,姓名:<span class="text-primary">{{ record.tx_info[2] }}</span>
+                            </td>
+                            <td v-else>
+                                未绑定
+                            </td>
+                            <td>{{ record.rmb }}</td>
+                            <td>{{ record.sxf }}</td>
+                            <td v-html="getTxStatus(record.status)"></td>
+                            <td>{{ record.remark }}</td>
+                            <td>{{ record.add_time }}</td>
+                            <td>{{ record.finish_time }}</td>
+                            <td>
+                                <a class="btn-sm btn-info" @click="change(record,1)" v-if="parseInt(record.status)===0">已转账</a>
+                                <a class="btn-sm btn-warning" @click="change(record,2)"
+                                   v-if="parseInt(record.status)===0">驳回</a>
+                                <a class="btn-sm btn-primary" data-toggle="modal" data-target="#modal-remark"
+                                   @click="tx=record">备注</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal-remark">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">提现记录备注</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-remark">
+                        <input type="hidden" name="id" :value="tx.id">
+                        <input type="text" disabled hidden>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">备注</span>
+                                <textarea name="remark" class="form-control" placeholder="输入备注内容"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="remark()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10,
+                status: 0,
+                zid: null
+            },
+            total: 0,
+            list: [],
+            tx: {}
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                this.$refs.pagination.setCurrent(this.search.page) // 改变页码
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'txRecord'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            getTxStatus: function (status) {
+                switch (parseInt(status)) {
+                    case 0:
+                        return '<span class="btn-sm btn-info">等待中</span>';
+                    case 1:
+                        return '<span class="btn-sm btn-success">已转账</span>';
+                    case 2:
+                        return '<span class="btn-sm btn-warning">已驳回</span>';
+                    case 3:
+                        return '<span class="btn-sm btn-danger">有异常</span>';
+                    default:
+                        return '<span class="btn-sm btn-danger">未○知</span>';
+                }
+            },
+            change: function (tx, status) {
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'txStatus'])}", {
+                    id: tx.id,
+                    status: status
+                }, function (data) {
+                    if (data.code === 0) {
+                        tx.status = status
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            remark: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'txRemark'])}", $("#form-remark").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        $("#modal-remark").modal('hide');
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            }
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

@@ -1,0 +1,122 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-xs-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading text-center">站点统计信息</div>
+            <div class="panel-body">
+                <table class="table table-bordered">
+                    <tbody v-if="count.order != undefined">
+                    <tr height="25">
+                        <td align="center"><font color="#808080">
+                            <b><span class="fa fa-tint"></span>订单总数</b><br>
+                            {{ count.order.all }} 条</font></td>
+                        <td align="center"><font color="#808080">
+                            <b><i class="fa fa-warning"></i>待处理订单</b><br>
+                            {{ count.order.status0 }} 条</font></td>
+                        <td align="center"><font color="#808080">
+                            <b><i class="fa fa-clock-o"></i>今日订单</b><br>
+                            {{ count.order.today }} 条</font></td>
+                    </tr>
+                    <tr height="25">
+                        <td align="center"><font color="#808080"
+                        ><b><span class="fa fa-globe"></span>总分站数</b><br>
+                            {{ count.web.all }} 个</font>
+                        </td>
+                        <td align="center"><font color="#808080">
+                            <b><i class="fa fa-clock-o"></i>今日新增分站</b><br>
+                            {{ count.web.today }} 个</font></td>
+                        <td align="center"><font color="#808080">
+                            <b><i class="fa fa-rmb"></i>待处理提现</b><br>{{ count.tx }}
+                            条</font></td>
+                    </tr>
+                    <tr height="25">
+                        <td align="center"><font color="#808080">
+                            <b><span class="fa fa-paypal"></span>总支付金额</b><br>
+                            {{ count.pay.all }} 元</font>
+                        </td>
+                        <td align="center"><font color="#808080">
+                            <b><i class="fa fa-paypal"></i>今日支付</b><br>
+                            {{ count.pay.today }} 元</font></td>
+                        <td align="center"><font color="#808080">
+                            <b><i class="fa fa-paypal"></i>昨日支付</b><br>
+                            {{ count.pay.yesterday }} 元</font></td>
+                    </tr>
+                    <tr height="25">
+                        <td align="center"><font color="#808080"><b><span class="fa fa-paypal"></span>QQ钱包交易额</b><br>
+                            {{ count.pay.alipay }} 元</font>
+                        </td>
+                        <td align="center"><font color="#808080"><b><i class="fa fa-paypal"></i>微信交易额</b><br>
+                            {{ count.pay.wxpay }} 元</font></td>
+                        <td align="center"><font color="#808080"><b><i class="fa fa-paypal"></i>支付宝交易额</b><br>
+                            {{ count.pay.qqpay }} 元</font></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            count: {},
+            isUpdate: false,
+            version: {},
+            isNew: false
+        },
+        methods: {
+            loadCount: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/sys',['action'=>'count'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.count = data.count;
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            checkVersion: function () {
+                klsf.msg("暂不可用", 'error');
+                /*自己完成
+                  var vue = this;
+                  klsf.ajax("{:url('Admin/index')}", {skAct: 'checkVersion'}, function (data) {
+                      if (data.code === 0) {
+                          if (data.isUpdate) {
+                              vue.isNew = false;
+                              vue.isUpdate = true;
+                              vue.version = data.version;
+                          } else {
+                              vue.isNew = true;
+                          }
+                      } else {
+                          klsf.msg(data.message, 'error');
+                      }
+                  })
+                  */
+            },
+            update: function () {
+                klsf.msg("暂不可用", 'error');
+                /*
+                var vue = this;
+                klsf.ajax("{:url('Admin/index')}", {skAct: 'updateVersion'}, function (data) {
+                    if (data.code === 0) {
+                        klsf.msg(data.message, 'success');
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        klsf.msg(data.message, 'error');
+                    }
+                })
+                */
+            }
+        },
+        mounted: function () {
+            this.loadCount();
+        }
+    })
+</script>
+{/block}

@@ -1,0 +1,98 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-sm-12 mt-2">
+        <div class="panel panel-primary">
+            <div class="panel-heading">站长余额变动明细</div>
+            <div class="panel-body">
+                <div class="form-inline">
+                    <div class="form-group">
+                        <select class="form-control" v-model="search.action">
+                            <option value="">所有</option>
+                            <option value="消费">消费</option>
+                            <option value="提成">提成</option>
+                            <option value="充值">充值</option>
+                        </select>
+                    </div>
+                    <div class="form-group ml-1">
+                        <input type="number" placeholder="站点ID" class="form-control"
+                               v-model="search.zid"/>
+                    </div>
+                    <div class="form-group ml-1">
+                        <button type="button" class="btn btn-primary"
+                                @click="search.page=1;loadRecordList()">搜索
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-info">
+                    <th>#</th>
+                    <th>站点ID</th>
+                    <th>类型</th>
+                    <th>金额</th>
+                    <th>剩余</th>
+                    <th>详情</th>
+                    <th>时间</th>
+                    </thead>
+                    <tbody>
+                    <tr v-for="record in list">
+                        <td v-if="parseFloat(record.value)>0"><i class="text-success fa fa-arrow-up"></i></td>
+                        <td v-else><i class="text-danger fa fa-arrow-down"></i></td>
+                        <td>{{ record.uid }}</td>
+                        <td>{{ record.action }}</td>
+                        <td>{{ record.value }}</td>
+                        <td>{{ record.now }}</td>
+                        <td>{{ record.remark }}</td>
+                        <td>{{ record.add_time }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-footer">
+                <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                            @page-phange="pageChange"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10,
+                action: '',
+                zid: null
+            },
+            total: 0,
+            list: []
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                this.$refs.pagination.setCurrent(this.search.page) // 改变页码
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/web',['action'=>'rmbRecord'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

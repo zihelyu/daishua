@@ -1,0 +1,174 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    商品列表
+                </div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.gid">
+                                <option value="">所有</option>
+                                <option v-for="group in groupList" :value="group.gid">{{ group.name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <select class="form-control" v-model="search.status">
+                                <option value="">所有</option>
+                                <option value="1">展示中</option>
+                                <option value="0">已停用</option>
+                            </select></div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th width="170">排序操作</th>
+                        <th>商品ID</th>
+                        <th>所属分组</th>
+                        <th>商品名称</th>
+                        <th title="{:getWebKindName(0)}价格|{:getWebKindName(1)}价格">价格</th>
+                        <th>状态</th>
+                        <th>添加时间</th>
+                        <th>操作</th>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>
+                                <a class="btn-xs sort_btn" title="移到顶部">
+                                    <i class="fa fa-long-arrow-up" @click="sort(record.goodsid,0)"></i>
+                                </a>
+                                <a class="btn-xs sort_btn" title="移到上一行">
+                                    <i class="fa fa-chevron-circle-up" @click="sort(record.goodsid,1)"></i>
+                                </a>
+                                <a class="btn-xs sort_btn" title="移到下一行">
+                                    <i class="fa fa-chevron-circle-down" @click="sort(record.goodsid,2)"></i>
+                                </a>
+                                <a class="btn-xs sort_btn" title="移到底部">
+                                    <i class="fa fa-long-arrow-down" @click="sort(record.goodsid,3)"></i>
+                                </a>
+                            </td>
+                            <td>{{ record.goodsid }}</td>
+                            <td>{{ record.group_name }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>{{ record.price }}</td>
+                            <td>
+                                <a class="btn-sm btn-warning" v-if="parseInt(record.status)===0" title="点击上架"
+                                   @click="change(record,'status',1)">已下架</a>
+                                <a class="btn-sm btn-success" v-else title="点击下架"
+                                   @click="change(record,'status',0)">上架中</a>
+                            </td>
+                            <td>{{ record.add_time }}</td>
+                            <td>
+                                <a :href="'goods.html?goodsid='+record.goodsid" class="btn-sm btn-info"
+                                   @click="goods=record" data-pjax>修改</a>
+                                <a class="btn-sm btn-danger" @click="delGoods(record.goodsid)">删除</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table></div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            groupList: [],
+            search: {
+                page: 1,
+                pageSize: 10,
+                status: '',
+                gid: '',
+            },
+            total: 0,
+            list: [],
+            goods: {},
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            loadGroupAll: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'groupAll'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.groupList = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            change: function (goods, act, value) {
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'change'])}", {
+                    goodsid: goods.goodsid,
+                    act: 'status',
+                    value: value
+                }, function (data) {
+                    if (data.code === 0) {
+                        goods[act] = value
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            sort: function (goodsid, act) {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'sort'])}", {
+                    goodsid: goodsid,
+                    act: act
+                }, function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            delGoods: function (goodsid) {
+                if (!confirm('确认要删除此商品？')) return
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'del'])}", {goodsid: goodsid}, function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+        },
+        mounted: function () {
+            this.loadGroupAll();
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

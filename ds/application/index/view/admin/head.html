@@ -1,0 +1,59 @@
+<ul class="nav navbar-nav navbar-right" data-pjax>
+    <li>
+        <a href="{:url('index')}"><span class="fa fa-dashboard"></span> 管理首页</a>
+    </li>
+    <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-edit"></i>系统设置<b class="caret"></b></a>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+            <li><a href="{:url('config')}">系统配置</a></li>
+            <li><a href="{:url('dj_list')}">对接配置</a></li>
+            <li><a href="{:url('clone_goods')}">一键克隆</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-paypal"></i>支付管理<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li><a href="{:url('pay_config')}">支付配置</a></li>
+            <li><a href="{:url('pay_list')}">支付订单</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-plus"></i>商品管理<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li><a href="{:url('goods_group')}">商品分组</a></li>
+            <li><a href="{:url('goods_list')}">商品列表</a></li>
+            <li><a href="{:url('goods')}">添加商品</a></li>
+            <li><a href="{:url('order_list')}">订单列表</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-paypal"></i>分站管理<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li><a href="{:url('web_list')}">分站列表</a></li>
+            <li><a href="{:url('web_add')}">添加分站</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-paypal"></i>资金管理<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li><a href="{:url('rmb_record')}">余额明细</a></li>
+            <li><a href="{:url('rmb_tx')}">提现管理</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="{:url('update')}"><span class="fa fa-cogs"></span> 程序更新</a>
+    </li>
+    <li>
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-user"></i>管理员<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li id="logout"><a>退出登录</a></li>
+            <li><a data-toggle="modal" data-target="#modal-profile">修改密码</a></li>
+        </ul>
+    </li>
+</ul>

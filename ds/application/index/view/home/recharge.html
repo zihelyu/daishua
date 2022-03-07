@@ -1,0 +1,56 @@
+{extend name="home/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">余额充值</div>
+            <div class="panel-body">
+                <form id="form-rmb" method="post" target="_blank">
+                    <input type="hidden" name="act" value="recharge">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                余额
+                            </span>
+                            <input value="{$userInfo.rmb}" class="form-control" disabled>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                充值
+                            </span>
+                            <input type="number" name="rmb" placeholder="输入充值金额(只能为大于1的整数)" class="form-control"
+                                   required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">支付方式</span>
+                            <span class="input-group-addon text-left" style="display: block;width: 100%">
+                                <div class="radio">
+                                    <input type="radio" name="pay" id="radio-alipay" value="alipay" checked>
+                                    <label for="radio-alipay">支付宝支付</label>
+                                </div>
+                                 <div class="radio">
+                                    <input type="radio" name="pay" id="radio-weixin" value="wxpay">
+                                    <label for="radio-weixin">微信支付</label>
+                                </div>
+                                 <div class="radio">
+                                    <input type="radio" name="pay" id="radio-qpay" value="qqpay">
+                                    <label for="radio-qpay">QQ钱包支付</label>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-info btn-block">充 值</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}

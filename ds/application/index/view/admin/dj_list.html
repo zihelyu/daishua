@@ -1,0 +1,235 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    对接社区列表
+                    <span class="pull-right">
+                        <span class="btn-sm btn-success" data-toggle="modal" data-target="#modal-add">添加</span>
+                    </span>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <td>编号</td>
+                        <th>平台</th>
+                        <th>站点域名</th>
+                        <th>账号</th>
+                        <th>密码</th>
+                        <th>操作</th>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{ record.did }}</td>
+                            <td v-html="getDjKind(record.kind)"></td>
+                            <td>{{ record.domain }}</td>
+                            <td>{{ record.user }}</td>
+                            <td :title="record.pass">****</td>
+                            <td>
+                                <a class="btn-sm btn-info" data-toggle="modal" data-target="#modal-update"
+                                   @click="dj=record">修改</a>
+                                <a class="btn-sm btn-danger" @click="delDj(record.did)">删除</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal-add">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">添加对接</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-add">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">对接平台</span>
+                                <select class="form-control" name="kind">
+                                    <option value="ylsq">亿乐社区</option>
+                                    <option value="95sq">95社区</option>
+                                    <option value="kyx">卡易信</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">站点域名</span>
+                                <input type="text" class="form-control" name="domain" placeholder="输入站点域名">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">账号/卡密</span>
+                                <input type="text" class="form-control" name="user" placeholder="输入账号或者卡密">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">密码</span>
+                                <input type="password" class="form-control" name="pass" placeholder="输入账号或者卡密密码,没有则不填写">
+                            </div>
+                            <div class="text-center">PS:有交易密码的，此处填写 密码@#@交易密码</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="add()">确认添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-update">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">修改对接</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-update">
+                        <input type="hidden" name="did" :value="dj.did">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">对接平台</span>
+                                <select class="form-control" name="kind" v-bind="dj.kind">
+                                    <option value="ylsq" :selected="dj.kind==='ylsq'">亿乐社区</option>
+                                    <option value="95sq" :selected="dj.kind==='95sq'">95社区</option>
+                                    <option value="kyx" :selected="dj.kind==='kyx'">卡易信</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">站点域名</span>
+                                <input type="text" class="form-control" name="domain" placeholder="输入站点域名"
+                                       :value="dj.domain">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">账号/卡密</span>
+                                <input type="text" class="form-control" name="user" placeholder="输入账号或者卡密"
+                                       :value="dj.user">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">密码</span>
+                                <input type="password" class="form-control" name="pass" placeholder="输入账号或者卡密密码,没有则不填写"
+                                       :value="dj.pass">
+                            </div>
+                            <div class="text-center">PS:有交易密码的，此处填写 密码@#@交易密码</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="update()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10
+            },
+            dj: {},
+            total: 0,
+            list: []
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                }, null)
+            },
+            getDjKind: function (kind) {
+                switch (kind) {
+                    case '95sq':
+                        return '95社区';
+                    case 'ylsq':
+                        return '亿乐社区';
+                    case 'kyx':
+                        return '卡易信';
+                    default:
+                        return '未知';
+                }
+            },
+            update: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'update'])}", $("#form-update").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        $("#modal-update").modal('hide');
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                }, null)
+            },
+            add: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'add'])}", $("#form-add").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        $("#modal-add").modal('hide');
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                }, null)
+            },
+            delDj: function (did) {
+                if (!confirm('确认删除此对接信息？')) return;
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/dj',['action'=>'del'])}", {did: did}, function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                }, null)
+            },
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

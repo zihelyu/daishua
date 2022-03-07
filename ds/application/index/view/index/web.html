@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+{extend name="common/layout" /}
+{block name="header"}
+<ul class="nav navbar-nav navbar-right" data-pjax>
+    <li>
+        <a href="{:url('login')}"><span class="fa fa-user"></span> 站长登录</a>
+    </li>
+    <li class="active">
+        <a href="{:url('web')}"><span class="fa fa-globe"></span> 搭建分站</a>
+    </li>
+</ul>
+
+{/block}
+<{block name="main"}
+<div class="row" id="vue-page">
+    {if condition="config('web_gg_web')"}
+    <div class="col-xs-12">
+        <div class="alert alert-success">
+            {:config('web_gg_web')}
+        </div>
+    </div>
+    {/if}
+    <div class="col-xs-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                        <span class="pull-right">
+                            <a href="/"><i class="fa fa-home"></i></a>
+                        </span>
+                <b>自助搭建分站</b>
+            </div>
+            <div class="panel-body">
+                <form id="form-web-add">
+                    <div class="form-group">
+                        <div class="input-group">
+                                    <span class="input-group-addon">
+                                        站长账号
+                                    </span>
+                            <input type="text" name="user" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                    <span class="input-group-addon">
+                                        站长密码
+                                    </span>
+                            <input type="text" name="pass" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                    <span class="input-group-addon">
+                                        联系QQ
+                                    </span>
+                            <input type="number" name="qq" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                    <span class="input-group-addon">
+                                        站点名称
+                                    </span>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                    <span class="input-group-addon">
+                                        分站版本
+                                    </span>
+                            <select name="kind" class="form-control">
+                                <option value="0">
+                                    {:getWebKindName(0)}({:config('sys_price_web_0')+config('web_price_web_0')}元)
+                                </option>
+                                <option value="1">
+                                    {:getWebKindName(1)}({:config('sys_price_web_1')+config('web_price_web_1')}元)
+                                </option>
+                                <option value="2">
+                                    {:getWebKindName(2)}({:config('sys_price_web_2')+config('web_price_web_2')}元)
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                    <span class="input-group-addon">
+                                        绑定域名
+                                    </span>
+                            <input type="text" name="qz" class="form-control" required>
+                            <span class="input-group-addon p-0">
+                                        <select name="domain"
+                                                style="-webkit-border-radius: 0;height:20px;border: 0;outline: none !important; border-radius: 0 5px 5px 0; padding: 0 5px 0 5px;">
+                                            <option v-for="domain in domainList" :value="domain">.{{ domain }}</option>
+                                        </select>
+                                    </span>
+                        </div>
+                    </div>
+                    <div class="form-group" v-if="order.oid === null">
+                        <button type="button" class="btn btn-info btn-block" @click="add()">立即开通</button>
+                    </div>
+                    <div class="text-center" v-else>
+                        <div class="list-group-item list-group-item-danger">站点永久域名：{{ order.domain }} (请牢记)</div>
+                        <div class="list-group-item list-group-item-danger">站点首页地址：http://{{ order.domain }} (请牢记)</div>
+                        <div class="list-group-item list-group-item-danger">站点后台地址：http://{{ order.domain }}/admin
+                            (请牢记)
+                        </div>
+                        <template v-if="order.oid===1">
+                            <div class="list-group-item list-group-item-success">分站搭建成功，请牢记上面信息！</div>
+                        </template>
+                        <template v-else>
+                            <div class="list-group-item list-group-item-success">订单生成成功，支付完成即可访问。现在去支付！</div>
+                            <div class="list-group-item">
+                                <h3 class="text-center">¥ {{order.rmb}} 元</h3>
+                                <a :href="'/index.php/index/index/pay/oid/'+order.oid+'/type/alipay.html'"
+                                   class="btn btn-info" target="_blank"> <img
+                                        src="/static/common/images/icon_alipay.png" width="25"
+                                        height="25">支付宝</a>
+                                <a :href="'/index.php/index/index/pay/oid/'+order.oid+'/type/wxpay.html'"
+                                   class="btn btn-info" target="_blank"> <img
+                                        src="/static/common/images/icon_weixin.png" width="25"
+                                        height="25">微信支付</a>
+                                <a :href="'/index.php/index/index/pay/oid/'+order.oid+'/type/qqpay.html'"
+                                   class="btn btn-info" target="_blank"> <img
+                                        src="/static/common/images/icon_qpay.png" width="25"
+                                        height="25">
+                                    QQ钱包</a>
+                            </div>
+                        </template>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            domainList: eval('{:json_encode(getDomainList())}'),
+            order: {
+                oid: null,
+                rmb: 0,
+                domain: null
+            },
+        },
+        methods: {
+            add: function () {
+                var vue = this;
+                klsf.ajax("{:url('IndexAjax/createWeb')}", $("#form-web-add").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.order.oid = data.oid;
+                        vue.order.rmb = data.rmb;
+                        vue.order.domain = data.domain
+                    } else if (data.code === 1) {
+                        vue.order.oid = 1;
+                        vue.order.domain = data.domain
+                    } else {
+                        vue.order.oid = null;
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            }
+        }
+    })
+</script>
+{/block}

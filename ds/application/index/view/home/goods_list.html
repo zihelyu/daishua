@@ -1,0 +1,171 @@
+{extend name="home/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">商品列表</div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.gid">
+                                <option value="">所有</option>
+                                <option v-for="group in groupList" :value="group.gid">{{ group.name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th>商品ID</th>
+                        <th>所属分组</th>
+                        <th>商品名称</th>
+                        <th>拿货</th>
+                        <th>用户加价</th>
+                        {if condition="config('web_kind') eq 2"}
+                        <th>下级分站加价</th>
+                        {/if}
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{ record.goodsid }}</td>
+                            <td>{{ record.group_name }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>{{ record.price }}</td>
+                            <td>
+                                <span class="btn-sm btn-info" data-toggle="modal" data-target="#modal-price"
+                                      @click="goods=record;price_add=record.price_add">{{ record.price_user }}</span>
+                            </td>
+                            {if condition="config('web_kind') eq 2"}
+                            <td>
+                                <span class="btn-sm btn-info" data-toggle="modal" data-target="#modal-price"
+                                      @click="goods=record;price_add=record.price_add">{{ record.price_web }}</span>
+                            </td>
+                            {/if}
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-price">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">设置加价价格</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-price">
+                        <input type="hidden" name="goodsid" :value="goods.goodsid">
+                        <input type="text" disabled hidden>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">拿货价格</span>
+                                <input class="form-control" v-model="goods.price" disabled>
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">用户加价</span>
+                                <input class="form-control" :value="goods.price_user" name="price_user">
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                        {if condition="config('web_kind') eq 2"}
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon">下级分站加价</span>
+                                <input class="form-control" :value="goods.price_web" name="price_web">
+                                <span class="input-group-addon">元</span>
+                            </div>
+                        </div>
+                        {else}
+                        <input type="hidden" class="form-control" :value="0" name="price_web">
+                        {/if}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="priceSet()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            groupList: [],
+            search: {
+                page: 1,
+                pageSize: 10,
+                gid: '',
+            },
+            total: 0,
+            list: [],
+            goods: {},
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                var vue = this;
+                klsf.ajax("{:url('HomeAjax/goods',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            loadGroupAll: function () {
+                var vue = this;
+                klsf.ajax("{:url('HomeAjax/goods',['action'=>'groupAll'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.groupList = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            priceSet: function () {
+                var vue = this;
+                klsf.ajax("{:url('HomeAjax/goods',['action'=>'priceSet'])}", $("#form-price").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        $("#modal-price").modal('hide');
+                        klsf.msg(data.message, 'success');
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+        },
+        mounted: function () {
+            this.loadGroupAll();
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

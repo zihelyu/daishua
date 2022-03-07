@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Language" content="zh-cn">
+    <meta name="renderer" content="webkit">
+    <title>{$pay['typeName']}安全支付 - {:config('web_name')}</title>
+    <link href="/static/common/css/{$pay['type']}.css" rel="stylesheet" media="screen">
+</head>
+<body>
+<div class="body">
+    <h1 class="mod-title">
+        <span class="ico-wechat"></span><span class="text">{$pay['typeName']}支付</span>
+    </h1>
+    <div class="mod-ct">
+        <div class="order">
+        </div>
+        <div class="amount">￥{$pay['rmb']}</div>
+        <div class="qr-image" id="qrcode">
+        </div>
+
+        <div class="detail">
+            <dl class="detail-ct" id="orderDetail">
+                <dt>商家</dt>
+                <dd>{:config('web_name')}</dd>
+                <dt>购买物品</dt>
+                <dd>{$pay['name']}</dd>
+                <dt>商户订单号</dt>
+                <dd>{$pay['oid']}</dd>
+                <dt>创建时间</dt>
+                <dd id="createTime">{:date("Y-m-d H:i:s")}</dd>
+            </dl>
+            <a onclick="showDetail();" class="arrow"><i class="ico-arrow"></i></a>
+        </div>
+        <div class="tip">
+            <span class="dec dec-left"></span>
+            <span class="dec dec-right"></span>
+            <div class="ico-scan"></div>
+            <div class="tip-text">
+                <p>请使用微信扫一扫</p>
+                <p>扫描二维码完成支付</p>
+            </div>
+        </div>
+        <div class="tip-text">
+        </div>
+    </div>
+    <div class="foot">
+        <div class="inner">
+            <p>{:config('web_name')}-在线支付</p>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+<script src="https://cdn.bootcss.com/layer/3.0.3/layer.min.js"></script>
+<script>
+    function showDetail() {
+        $("#orderDetail").toggle(300);
+    }
+
+    $("#qrcode").qrcode({width: 230, height: 230, text: "{$pay['url']}", colorDark: "#000000", colorLight: "#ffffff",});
+
+    function check() {
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            url: "{:url('IndexAjax/checkPay')}",
+            timeout: 10000,
+            data: {oid: "{$pay['oid']}"},
+            success: function (data) {
+                if (data.code === 0) {
+                    layer.msg('支付成功，正在跳转中...', {icon: 16, shade: 0.01, time: 15000});
+                    setTimeout(window.location.href = '/', 1000);
+                } else {
+                    setTimeout("check()", 4000);
+                }
+            },
+            error: function (XMLHttpRequest, textStatus) {
+                if (textStatus === "timeout") {
+                    setTimeout("check()", 1000);
+                } else {
+                    setTimeout("check()", 4000);
+                }
+            }
+        });
+    }
+
+    window.onload = check();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+{extend name="home/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-lg-6 col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">一键克隆</div>
+            <div class="panel-body">
+                我的克隆密匙：{if condition="strlen(config('web_clone_key'))!=32"}
+                <a class="btn-xs btn-info" @click="changeClone">获取</a>
+                {else}
+                {:config('web_clone_key')} <a class="btn-xs btn-warning" @click="changeClone">更换</a>
+                {/if}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">一键克隆</div>
+            <div class="panel-body">
+                <div class="alert alert-warning">
+                    本功能可以一键克隆目标站点的所有公告配置。<br>
+                    注意：此功能会清空当前站点所有所有公告配置。
+                </div>
+                <form id="form-clone">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                克隆站点域名
+                            </span>
+                            <input type="text" name="domain" class="form-control" placeholder="输入你要克隆站点的域名,不带http://">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                克隆密匙
+                            </span>
+                            <input type="text" name="key" class="form-control" placeholder="输入克隆密匙">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-info btn-block" @click="cloneGG()">开始克隆</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        methods: {
+            cloneGG: function () {
+                if (!confirm("确认清空现在公告并进行克隆？")) return;
+                klsf.ajax("{:url('HomeAjax/config',['action'=>'clone'])}", $("#form-clone").serialize(), function (data) {
+                    if (data.code === 0) {
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            changeClone: function () {
+                klsf.ajax("{:url('HomeAjax/config',['action'=>'cloneKey'])}", null, function (data) {
+                    if (data.code === 0) {
+                        klsf.msg(data.message, 'success');
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1000)
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            }
+        }
+    })
+</script>
+{/block}

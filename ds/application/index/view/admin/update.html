@@ -1,0 +1,24 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-md-12 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">程序更新</div>
+            <div class="panel-body">
+            {if(isset($rs))}
+            {$rs}
+            {/if}
+            {if condition="$code eq -1"}
+            {$msg}
+            {else}
+            {$msg}<br/><hr/>
+			{$uplog}<br/>
+            <form id="form-web-add" method="post" action="">
+            <button type="submit" class="btn btn-info btn-block">立即更新最新版本</button>
+            </form>
+            {/if}
+            </div>
+        </div>
+    </div>
+</div>
+{/block}

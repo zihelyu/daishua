@@ -1,0 +1,139 @@
+{extend name="home/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">订单列表</div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.goodsid">
+                                <option value="">所有</option>
+                                <option v-for="goods in goodsList" :value="goods.goodsid">{{ goods.name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <select class="form-control" v-model="search.status">
+                                <option value="">所有</option>
+                                <option value="0">等待中</option>
+                                <option value="3">有异常</option>
+                                <option value="90">已完成</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="text" placeholder="订单号" class="form-control"
+                                   v-model="search.id"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="text" placeholder="下单账号/ID" class="form-control"
+                                   v-model="search.value1"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th>订单号</th>
+                        <th>商品名称</th>
+                        <th width="80">状态</th>
+                        <th>支付状态</th>
+                        <th>参数1</th>
+                        <th>用户单价</th>
+                        <th>我的提成</th>
+                        <th>每份数量</th>
+                        <th>购买份数</th>
+                        <th>创建时间</th>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td># {{ record.id }}</td>
+                            <td>{{ record.name }}</td>
+                            <td v-html="getOrderStatus(record.status)"></td>
+                            <td v-if="parseInt(record.pay_status)===0" class="text-warning">未支付</td>
+                            <td v-else class="text-success">已支付</td>
+                            <td>{{ record.value1 }}</td>
+                            <td>{{ record.price }}</td>
+                            <td>{{ record.tc }}</td>
+                            <td>{{ record.unit }}</td>
+                            <td>{{ record.num }}</td>
+                            <td>{{ record.add_time }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            goodsList: [],
+            search: {
+                page: 1,
+                pageSize: 10,
+                goodsid: '',
+                status: '',
+                pay_status: 1,
+                id: null,
+                value1: null
+            },
+            total: 0,
+            list: [],
+            order: {},
+            ids: [],
+            all: false
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            getOrderStatus: function (status) {
+                return klsf.getOrderStatus(status);
+            },
+            loadRecordList: function () {
+                this.all = false;
+                this.ids = []; //清空选择
+                this.$refs.pagination.setCurrent(this.search.page) // 改变页码
+                var vue = this;
+                klsf.ajax("{:url('HomeAjax/order',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            loadGoodsAll: function () {
+                var vue = this;
+                klsf.ajax("{:url('HomeAjax/goods',['action'=>'goodsAll'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.goodsList = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            }
+        },
+        mounted: function () {
+            this.loadGoodsAll();
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

@@ -1,0 +1,285 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">官方支付接口配置</div>
+            <div class="panel-body">
+                <form id="form-config1">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                支付接口授权域名
+                            </span>
+                            <input type="text" name="pay_domain" class="form-control" placeholder="输入授权域名"
+                                   value="{:config('sys_pay_domain')}" required>
+                        </div>
+                        <pre>针对支付宝、QQ钱包、微信支付这三种官方支付接口需要，其他支付平台可以不填写</pre>
+                    </div>
+                    <hr>
+                    <pre>支付宝官方接口接口配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    合作身份者ID
+                                </span>
+                            <input type="number" name="pay_alipay_partner" minlength="16" maxlength="16"
+                                   class="form-control"
+                                   value="{:config('sys_pay_alipay_partner')}">
+                        </div>
+                        <pre>合作身份者ID，签约账号，以2088开头由16位纯数字组成的字符串，查看地址：https://b.alipay.com/order/pidAndKey.htm</pre>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    MD5密钥
+                                </span>
+                            <input type="text" name="pay_alipay_key" minlength="32" maxlength="32"
+                                   class="form-control"
+                                   value="{:config('sys_pay_alipay_key')}">
+                        </div>
+                        <pre> MD5密钥，安全检验码，由数字和字母组成的32位字符串，查看地址：https://b.alipay.com/order/pidAndKey.htm</pre>
+                    </div>
+                    <hr>
+                    <pre>微信在线支付接口配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    APPID
+                                </span>
+                            <input type="text" name="pay_weixin_appid" minlength="18" maxlength="18"
+                                   class="form-control"
+                                   value="{:config('sys_pay_weixin_appid')}">
+                        </div>
+                        <pre>绑定支付的APPID（必须配置，开户邮件中可查看）</pre>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    MCHID
+                                </span>
+                            <input type="number" name="pay_weixin_mchid" minlength="10" maxlength="10"
+                                   class="form-control"
+                                   value="{:config('sys_pay_weixin_mchid')}">
+                        </div>
+                        <pre>商户号（必须配置，开户邮件中可查看）</pre>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    KEY
+                                </span>
+                            <input type="text" name="pay_weixin_key" minlength="32" maxlength="32"
+                                   class="form-control"
+                                   value="{:config('sys_pay_weixin_key')}">
+                        </div>
+                        <pre>商户支付密钥，参考开户邮件设置（必须配置，登录商户平台自行设置）
+* 设置地址：https://pay.weixin.qq.com/index.php/account/api_cert</pre>
+                    </div>
+                    <hr>
+                    <pre>QQ钱包在线支付接口配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    商户号
+                                </span>
+                            <input type="number" name="pay_qpay_partner" minlength="10" maxlength="10"
+                                   class="form-control"
+                                   value="{:config('sys_pay_qpay_partner')}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                                <span class="input-group-addon">
+                                    MD5密钥
+                                </span>
+                            <input type="text" name="pay_qpay_key" minlength="32" maxlength="32"
+                                   class="form-control"
+                                   value="{:config('sys_pay_qpay_key')}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-info btn-block" @click="saveConfig(1)">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">第三方支付平台配置</div>
+            <div class="panel-body">
+                <form id="form-config2">
+                    <hr>
+                    <pre>酷客云付通商户配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                商户号
+                            </span>
+                            <input type="number" name="pay_kk_pid" class="form-control" placeholder="输入商户号"
+                                   value="{:config('sys_pay_kk_pid')}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                秘钥
+                            </span>
+                            <input type="text" name="pay_kk_key" class="form-control" placeholder="输入秘钥"
+                                   value="{:config('sys_pay_kk_key')}" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <pre>我爱云支付商户配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                商户号
+                            </span>
+                            <input type="number" name="pay_52_pid" class="form-control" placeholder="输入商户号"
+                                   value="{:config('sys_pay_52_pid')}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                秘钥
+                            </span>
+                            <input type="text" name="pay_52_key" class="form-control" placeholder="输入秘钥"
+                                   value="{:config('sys_pay_52_key')}" required>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <pre>彩虹易支付商户配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                商户号
+                            </span>
+                            <input type="number" name="pay_ch_pid" class="form-control" placeholder="输入商户号"
+                                   value="{:config('sys_pay_ch_pid')}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                秘钥
+                            </span>
+                            <input type="text" name="pay_ch_key" class="form-control" placeholder="输入秘钥"
+                                   value="{:config('sys_pay_ch_key')}" required>
+                        </div>
+                    </div>
+                    <hr>
+                    <pre>BL云支付商户配置</pre>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                商户号
+                            </span>
+                            <input type="number" name="pay_bl_pid" class="form-control" placeholder="输入商户号"
+                                   value="{:config('sys_pay_bl_pid')}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                秘钥
+                            </span>
+                            <input type="text" name="pay_bl_key" class="form-control" placeholder="输入秘钥"
+                                   value="{:config('sys_pay_bl_key')}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-info btn-block" @click="saveConfig(2)">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">支付信息配置</div>
+            <div class="panel-body">
+                <form id="form-config3">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                支付宝支付
+                            </span>
+                            <select name="pay_alipay" class="form-control" v-model="pay.alipay">
+                                <option value="0">关闭</option>
+                                <option value="kk">酷客云付通</option>
+                                <option value="52">我爱云支付</option>
+                                <option value="ch">彩虹易支付</option>
+                                <option value="bl">BL云支付</option>
+                                <option value="gf">支付宝官方支付</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                QQ钱包支付
+                            </span>
+                            <select name="pay_qqpay" class="form-control" v-model="pay.qqpay">
+                                <option value="0">关闭</option>
+                                <option value="kk">酷客云付通</option>
+                                <option value="52">我爱云支付</option>
+                                <option value="ch">彩虹易支付</option>
+                                <option value="bl">BL云支付</option>
+                                <option value="gf">QQ钱包官方支付</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                微信支付
+                            </span>
+                            <select name="pay_wxpay" class="form-control" v-model="pay.wxpay">
+                                <option value="0">关闭</option>
+                                <option value="kk">酷客云付通</option>
+                                <option value="52">我爱云支付</option>
+                                <option value="ch">彩虹易支付</option>
+                                <option value="bl">BL云支付</option>
+                                <option value="gf">微信官方支付</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-info btn-block" @click="saveConfig(3)">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            pay: {
+                alipay: "{:config('sys_pay_alipay')}",
+                qqpay: "{:config('sys_pay_qqpay')}",
+                wxpay: "{:config('sys_pay_wxpay')}",
+            }
+        },
+        methods: {
+            saveConfig: function (id) {
+                klsf.ajax("{:url('AdminAjax/sys',['action'=>'config'])}", $("#form-config" + id).serialize(), function (data) {
+                    if (data.code === 0) {
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            }
+        }
+    })
+</script>
+{/block}

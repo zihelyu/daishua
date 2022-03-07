@@ -1,0 +1,294 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div id="vue-page">
+    <div class="row">
+        <div class="col-sm-12 mt-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading">订单列表</div>
+                <div class="panel-body">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.pageSize">
+                                <option value="10">每页10条</option>
+                                <option value="20">每页20条</option>
+                                <option value="50">每页50条</option>
+                                <option value="100">每页100条</option>
+                                <option value="200">每页200条</option>
+                                <option value="500">每页500条</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <select class="form-control" v-model="search.goodsid">
+                                <option value="">所有</option>
+                                <option v-for="goods in goodsList" :value="goods.goodsid">{{ goods.name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <select class="form-control" v-model="search.status">
+                                <option value="">所有</option>
+                                <option value="0">等待中</option>
+                                <option value="3">有异常</option>
+                                <option value="90">已完成</option>
+                            </select>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="text" placeholder="订单号" class="form-control"
+                                   v-model="search.id"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="text" placeholder="下单账号/ID" class="form-control"
+                                   v-model="search.value1"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <input type="number" placeholder="所属站点" class="form-control"
+                                   v-model="search.zid"/>
+                        </div>
+                        <div class="form-group ml-1">
+                            <button type="button" class="btn btn-primary"
+                                    @click="search.page=1;loadRecordList()">搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                        <th width="80">订单号</th>
+                        <th>所属站点</th>
+                        <th>商品名称</th>
+                        <th width="80">状态</th>
+                        <th>支付状态</th>
+                        <th>参数1</th>
+                        <th>参数2</th>
+                        <th v-if="!isHidden">参数3</th>
+                        <th v-if="!isHidden">参数4</th>
+                        <th v-if="!isHidden">参数5</th>
+                        <th v-if="!isHidden">参数6</th>
+                        <th v-if="isHidden"><a class="btn-xs btn-success" @click="isHidden=false">+</a></th>
+                        <th v-else><a class="btn-xs btn-success" @click="isHidden=true">-</a></th>
+                        <th>用户单价</th>
+                        <th>每份数量</th>
+                        <th>购买份数</th>
+                        <th>创建时间</th>
+                        <th>对接状态</th>
+                        <th width="60">操作</th>
+                        </thead>
+                        <tbody>
+                        <tr v-if="parseInt(total)>0">
+                            <td>
+                                <input type="checkbox" id="checkboxAll" @change="selectAll()"> 全选
+                            </td>
+                            <td colspan="20">
+                                <span class="btn-sm btn-info" @click="allChange(0)">等待中</span>
+                                <span class="btn-sm btn-success" @click="allChange(90)">已完成</span>
+                                <span class="btn-sm btn-danger" @click="allChange(3)">有异常</span>
+                                <span class="btn-sm btn-warning" @click="exportOrder()">导出</span>
+                                <span class="btn-sm btn-warning" @click="exportOrder('all')">导出所有等待中订单</span>
+                            </td>
+                        </tr>
+                        <tr v-for="record in list">
+                            <td>
+                                <input type="checkbox" v-model="ids" :value="record.id" :id="'checkbox'+record.id">
+                                #{{ record.id }}
+                            </td>
+                            <td>{{ record.zid }}</td>
+                            <td>{{ record.name }}</td>
+                            <td v-html="getOrderStatus(record.status)" data-toggle="modal"
+                                data-target="#modal-status" @click="order=record"></td>
+                            <td v-if="parseInt(record.pay_status)===0" class="text-warning">未支付</td>
+                            <td v-else class="text-success">已支付</td>
+                            <td>{{ record.value1 }}</td>
+                            <td>{{ record.value2 }}</td>
+                            <td v-if="!isHidden">{{ record.value3 }}</td>
+                            <td v-if="!isHidden">{{ record.value4 }}</td>
+                            <td v-if="!isHidden">{{ record.value5 }}</td>
+                            <td v-if="!isHidden">{{ record.value6 }}</td>
+                            <td></td>
+                            <td>{{ record.price }}</td>
+                            <td>{{ record.unit }}</td>
+                            <td>{{ record.num }}</td>
+                            <td>{{ record.add_time }}</td>
+                            <td v-if="parseInt(record.did) === 0" class="text-warning">自营</td>
+                            <td v-else-if="record.dj_id===0" class="text-danger" :title="record.dj_error"><span
+                                    class="btn-sm btn-danger" @click="djOrder(record.id)">失败</span></td>
+                            <td v-else class="text-success">成功</td>
+                            <td>
+                                <span class="btn-sm btn-warning" @click="exportOrder(record.id)">导出</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="modal-status">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">修改状态</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="form-status">
+                        <input type="hidden" name="id" :value="order.id">
+                        <input type="text" disabled hidden>
+                        <div class="form-group">
+                            <select name="status" class="form-control" v-bind="order.status">
+                                <option value="0" :selected="parseInt(order.status)===0">等待中</option>
+                                <option value="1" :selected="parseInt(order.status)===1">进行中</option>
+                                <option value="3" :selected="parseInt(order.status)===3">有异常</option>
+                                <option value="90" :selected="parseInt(order.status)===90">已完成</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="orderStatus()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            isHidden: true,
+            goodsList: [],
+            search: {
+                page: 1,
+                pageSize: 10,
+                goodsid: '',
+                status: '',
+                pay_status: 1,
+                id: null,
+                value1: null,
+                zid: null
+            },
+            total: 0,
+            list: [],
+            order: {},
+            ids: []
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            getOrderStatus: function (status) {
+                return klsf.getOrderStatus(status);
+            },
+            loadRecordList: function () {
+                $("#checkboxAll").attr("checked", false);
+                this.ids = []; //清空选择
+                this.$refs.pagination.setCurrent(this.search.page) // 改变页码
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/order',['action'=>'list'])}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            loadGoodsAll: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/goods',['action'=>'goodsAll'])}", null, function (data) {
+                    if (data.code === 0) {
+                        vue.goodsList = data.list
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            orderStatus: function () {
+                var vue = this;
+                klsf.ajax("{:url('AdminAjax/order',['action'=>'status'])}", $("#form-status").serialize(), function (data) {
+                    if (data.code === 0) {
+                        vue.order.status = data.status;
+                        $("#modal-status").modal('hide');
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            selectAll: function () {
+                var vue = this;
+                vue.ids = [];
+                if ($("#checkboxAll").is(':checked')) {
+                    vue.list.forEach(function (order) {
+                        vue.ids.push(order.id)
+                    })
+                }
+            },
+            allChange: function (status) {
+                var vue = this;
+                if (vue.ids.length < 1) {
+                    klsf.msg('请先选择订单', 'error');
+                    return
+                }
+                klsf.ajax("{:url('AdminAjax/order',['action'=>'plStatus'])}", {
+                    ids: vue.ids,
+                    status: status
+                }, function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+            exportOrder: function (id) {
+                if (id === undefined) {
+                    if (this.ids.length < 1) {
+                        klsf.msg('请先选择订单', 'error')
+                        return
+                    } else {
+                        id = this.ids.join(',');
+                    }
+                } else if (id === 'all') {
+                    if (this.search.goodsid === '') {
+                        klsf.msg('请先选择一种商品', 'error')
+                        return
+                    } else {
+                        id = '-' + this.search.goodsid;
+                    }
+                }
+                window.location.href = '{:url("admin/export")}?ids=' + id;
+            },
+            djOrder: function (id) {
+                var vue = this;
+                if (!confirm("确认要重新对接？")) return;
+                klsf.ajax("{:url('AdminAjax/order',['action'=>'dj'])}", {
+                    id: id,
+                }, function (data) {
+                    if (data.code === 0) {
+                        vue.loadRecordList();
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            },
+        },
+        mounted: function () {
+            this.loadGoodsAll();
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

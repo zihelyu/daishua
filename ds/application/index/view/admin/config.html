@@ -1,0 +1,171 @@
+{extend name="admin/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-lg-6 col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">系统基本设置</div>
+            <div class="panel-body">
+                <form id="form-config">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                分站可选域名
+                            </span>
+                            <textarea name="domains" placeholder="一行一条" rows="5" class="form-control">{:config('sys_domains')}</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                分站后台公告
+                            </span>
+                            <textarea name="gg_web_admin" placeholder="输入公告内容，支持html" rows="5" class="form-control">{:config('sys_gg_web_admin')}</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                站长最低提现金额
+                            </span>
+                            <input type="number" name="tx_min" value="{:config('sys_tx_min')}" class="form-control"
+                                   placeholder="输入站长最低提现金额">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                站长提现手续费费率
+                            </span>
+                            <input type="number" name="tx_rate" value="{:config('sys_tx_rate')}" class="form-control"
+                                   placeholder="输入提现手续费费率（0-1的小数）">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-info btn-block" @click="saveConfig('config')">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">分站价格配置</div>
+            <div class="panel-body">
+                <form id="form-price">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                用户开通{:getWebKindName(0)}分站价格
+                            </span>
+                            <input type="number" name="price_web_0" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_0')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                用户开通{:getWebKindName(1)}分站价格
+                            </span>
+                            <input type="number" name="price_web_1" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_1')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                用户开通{:getWebKindName(2)}分站价格
+                            </span>
+                            <input type="number" name="price_web_2" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_2')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                专业版开通{:getWebKindName(0)}分站价格
+                            </span>
+                            <input type="number" name="price_web_1_0" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_1_0')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                专业版开通{:getWebKindName(1)}分站价格
+                            </span>
+                            <input type="number" name="price_web_1_1" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_1_1')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                专业版开通{:getWebKindName(2)}分站价格
+                            </span>
+                            <input type="number" name="price_web_1_2" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_1_2')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                旗舰版开通{:getWebKindName(0)}分站价格
+                            </span>
+                            <input type="number" name="price_web_2_0" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_2_0')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                旗舰版开通{:getWebKindName(1)}分站价格
+                            </span>
+                            <input type="number" name="price_web_2_1" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_2_1')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                旗舰版开通{:getWebKindName(2)}分站价格
+                            </span>
+                            <input type="number" name="price_web_2_2" class="form-control" placeholder="输入价格"
+                                   value="{:config('sys_price_web_2_2')}" required>
+                            <span class="input-group-addon">元</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-info btn-block" @click="saveConfig('price')">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        methods: {
+            saveConfig: function (id) {
+                klsf.ajax("{:url('AdminAjax/sys',['action'=>'config'])}", $("#form-" + id).serialize(), function (data) {
+                    if (data.code === 0) {
+                        klsf.msg(data.message, 'success')
+                    } else {
+                        klsf.msg(data.message, 'error')
+                    }
+                })
+            }
+        }
+    })
+</script>
+{/block}
